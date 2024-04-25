@@ -1,0 +1,73 @@
+$mainBackground: #444038;
+
+$cellHeight: 2rem;
+$cellRatio: calc(3.5 / 2);
+$cellRadius: 16px;
+
+body {
+    background-color: $mainBackground;
+    margin: 0;
+    padding: 0;
+    
+    --cellBackground: #fff;
+}
+
+#table {
+    width: fit-content;
+    user-select: none;
+
+    border-radius: 5px;
+    overflow: hidden;
+    font-family: "Cousine";
+    
+    margin: 10px;
+    
+    > * {
+        display: flex;
+        margin: 4px 0;
+        
+        > * {
+            display: flex;
+            margin: 0 0.25rem;
+
+            :first-child {
+                border-radius: $cellRadius 0 0 $cellRadius;
+            }
+            
+            :last-child {
+                border-radius: 0 $cellRadius $cellRadius 0;
+            }
+
+            > *  {
+                width: calc($cellHeight * $cellRatio);
+                height: $cellHeight;
+                
+                background-color: var(--cellBackground);
+                color: var(--cellText);
+
+                &:hover {
+                    background-color: var(--cellHover);
+                }
+                
+                box-sizing: border-box;
+
+                text-align: center;
+                // Idk why this happens, but in this font this needs x1.1
+                line-height: calc($cellHeight * 1.1); 
+            }
+        }
+    }
+    
+    #names {
+        > * {
+            > * {
+                background-color: $mainBackground;
+                color: #fff;
+                font-weight: bold;
+
+                border: none;
+                outline: none;
+            }
+        }
+    }
+}

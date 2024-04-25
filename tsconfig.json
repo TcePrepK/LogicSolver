@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+      "rootDirs": ["src"],
+      "outDir": "./dist/",
+      "module": "es6",
+      "target": "es5",
+      "jsx": "react",
+      "allowJs": true,
+      "moduleResolution": "node",
+      
+      "noImplicitAny": true,
+      "esModuleInterop": true,
+      "allowUnreachableCode": false,
+      "allowUnusedLabels": false,
+      "alwaysStrict": true,
+      "noFallthroughCasesInSwitch": false,
+      "noImplicitReturns": true,
+      "noImplicitThis": true,
+      // "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "strict": true,
+      "strictBindCallApply": true,
+      "strictFunctionTypes": true,
+      "strictNullChecks": true,
+      "strictPropertyInitialization": true
+    }
+  }
