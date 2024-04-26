@@ -66,7 +66,7 @@
         "@typescript-eslint/quotes": ["error", "double"],
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/space-before-function-paren": ["error", "never"],
-        // "@typescript-eslint/no-unused-vars": ["warn", { "args": "all", "caughtErrors": "all", "vars": "all" }],
+        "@typescript-eslint/no-unused-vars": ["warn", { "args": "all", "caughtErrors": "all", "vars": "all" }],
         "@typescript-eslint/no-empty-function": "warn",
         "@typescript-eslint/no-empty-interface": "warn",
         "@typescript-eslint/no-invalid-this": "error",
