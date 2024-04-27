@@ -73,6 +73,10 @@ body {
                 // border: 1px #aaa;
                 // outline: none;
             }
+
+            .supCase {
+                line-height: calc($cellHeight * 1.1 - 0.7rem);
+            }
         }
     }
 }

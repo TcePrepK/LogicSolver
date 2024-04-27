@@ -46,7 +46,10 @@ export class TruthTable {
             this.onNameBlur(element, i);
             element.addEventListener("focus", () => this.onNameFocus(element, i));
             element.addEventListener("blur", () => this.onNameBlur(element, i));
-            element.addEventListener("keydown", e => this.onNameChange(e as KeyboardEvent, element, i));
+            element.addEventListener("keydown", e => {
+                this.onNameKeyDown(e as KeyboardEvent, element, i);
+                this.names[i] = element.innerHTML;
+            });
             element.addEventListener("input", e => this.onNameInput(e as InputEvent, element));
         }
 
@@ -99,57 +102,83 @@ export class TruthTable {
         if (event.inputType === "insertFromPaste") {
             const value = input.innerText;
             input.innerText = value.substring(0, 2);
+            input.classList.remove("supCase");
             this.setCaretPos(input, 1);
+            return;
+        }
+
+        const value = input.innerText;
+        if ((/.([_\\^])./).test(value)) {
+            const key = event.data;
+            const pos = key === "_" ? "sub" : "sup";
+            input.innerHTML = `${input.innerText[0]}<${pos}>${key}</${pos}>`;
+            input.classList.add("supCase");
+            event.preventDefault();
+            this.setCaretPos(input, 2);
+            return;
+        }
+
+        if (value.length > 2) {
+            input.innerText = value.slice(0, 2);
+            input.classList.remove("supCase");
+            this.setCaretPos(input, 2);
+            return;
         }
     }
 
-    private onNameChange(event: KeyboardEvent, input: HTMLDivElement, idx: number): void {
+    private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement, idx: number): void {
         const value = input.innerHTML;
 
-        if (value.length < 2) return;
-        if (event.key.length > 2) return;
+        if (event.key === "Dead") {
+            input.blur();
+            setTimeout(() => input.focus());
 
-        // Only accepting, A_B form!
-        if ((/[A-Za-z]+[_\\^]/).test(value)) {
-            const key = event.key;
-            const pos = key === "_" ? "sub" : "sup";
-            input.innerHTML = `${input.innerHTML[0]}<${pos}>${key}</${pos}>`;
-            this.setCaretPos(input, 1);
             event.preventDefault();
             return;
         }
 
+        if (value.length < 2) return;
+
+        const deleteKeys = ["Backspace", "Delete"];
+
         const select = window.getSelection();
-        if (select && !select.isCollapsed) return;
+        const posReg = /<(\/)?(sub|sup)>/;
+        if (deleteKeys.includes(event.key)) {
+            if (!posReg.test(value)) return;
+
+            if (select && select.toString().length === 2) {
+                input.innerHTML = "";
+                input.classList.remove("supCase");
+                event.preventDefault();
+                return;
+            }
+
+            const idx = deleteKeys.indexOf(event.key);
+            const caret = this.getCaretPos(input);
+            if (caret === idx * 2) return;
+
+            const nonPos = value.replace(posReg, "");
+            const final = nonPos.split("")[2 - idx - caret];
+            input.innerHTML = final;
+            input.classList.remove("supCase");
+            this.setCaretPos(input, caret - 1 + idx);
+
+            event.preventDefault();
+            return;
+        }
+
+        if (event.key.length > 2 || event.ctrlKey) return;
+
+        if ((/.([_\\^])/).test(value)) {
+            const pos = value[1] === "_" ? "sub" : "sup";
+            input.innerHTML = `${input.innerHTML[0]}<${pos}>${event.key}</${pos}>`;
+            if (pos === "sup") input.classList.add("supCase");
+            this.setCaretPos(input, 2);
+            event.preventDefault();
+            return;
+        }
 
         event.preventDefault();
-        // const totalValue = input.value;
-        // if (this.names[idx].length < 1) {
-        //     this.names[idx] = totalValue;
-        //     return;
-        // }
-
-        // const space = event.data === " ";
-        // if (event.data === null || space) {
-        //     const index = space ? 1 : 0;
-        //     const codePoint = input.value.codePointAt(index);
-        //     if (codePoint === undefined) return;
-
-        //     const data = codePoint - 0x2080;
-        //     if (data >= 0 && data < 10) {
-        //         input.value = input.value.substring(0, space ? 1 : 0) + data;
-        //     }
-
-        //     return;
-        // }
-
-        // const addedData = event.data;
-        // const numberData = Number(addedData);
-        // if (isNaN(numberData)) return;
-        // if (totalValue[0] === addedData) return;
-        // if (totalValue[0] === " ") return;
-
-        // input.value = totalValue[0] + `&sup${String.fromCodePoint(0x2080 + numberData)}`;
     }
 
     // Stolen code, idk how it does it!
@@ -169,6 +198,16 @@ export class TruthTable {
     private setCaretPos(element: HTMLDivElement, idx: number): void {
         const range = document.createRange();
         const sel = window.getSelection();
+
+        if (idx >= 2) {
+            range.selectNodeContents(element);
+            range.collapse(false);
+
+            if (sel === null) return;
+            sel.removeAllRanges();
+            sel.addRange(range);
+            return;
+        }
 
         range.setStart(element, idx);
         range.collapse(true);
