@@ -66,16 +66,33 @@
         "@typescript-eslint/quotes": ["error", "double"],
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/space-before-function-paren": ["error", "never"],
-        "@typescript-eslint/no-unused-vars": ["warn", { "args": "all", "caughtErrors": "all", "vars": "all" }],
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "args": "all",
+                "argsIgnorePattern": "^_",
+                "caughtErrors": "all",
+                "caughtErrorsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_",
+                "varsIgnorePattern": "^_",
+                "ignoreRestSiblings": true
+            }
+        ],
         "@typescript-eslint/no-empty-function": "warn",
         "@typescript-eslint/no-empty-interface": "warn",
         "@typescript-eslint/no-invalid-this": "error",
         "@typescript-eslint/no-extra-semi": "error",
         "@typescript-eslint/consistent-type-definitions": "off",
-        "@typescript-eslint/unified-signatures": ["error", { "ignoreDifferentlyNamedParameters": true}],
+        "@typescript-eslint/unified-signatures": [
+            "error",
+            { "ignoreDifferentlyNamedParameters": true }
+        ],
         "@typescript-eslint/no-unnecessary-type-constraint": ["warn"],
         "@typescript-eslint/no-require-imports": ["warn"],
-        "@typescript-eslint/no-redeclare": ["error", { "builtinGlobals": true }],
+        "@typescript-eslint/no-redeclare": [
+            "error",
+            { "builtinGlobals": true }
+        ],
         "@typescript-eslint/no-non-null-asserted-nullish-coalescing": ["warn"],
         "@typescript-eslint/no-meaningless-void-operator": "warn",
         "@typescript-eslint/no-inferrable-types": "warn",
@@ -85,8 +102,14 @@
         "@typescript-eslint/prefer-nullish-coalescing": "off",
         "@typescript-eslint/restrict-plus-operands": "warn",
         "@typescript-eslint/restrict-template-expressions": "off",
-        "@typescript-eslint/consistent-type-assertions": ["error", { "assertionStyle": "as", "objectLiteralTypeAssertions": "allow" }],
-        "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+        "@typescript-eslint/consistent-type-assertions": [
+            "error",
+            { "assertionStyle": "as", "objectLiteralTypeAssertions": "allow" }
+        ],
+        "@typescript-eslint/no-misused-promises": [
+            "error",
+            { "checksVoidReturn": false }
+        ],
         "@typescript-eslint/no-confusing-void-expression": "off",
         "@typescript-eslint/no-dynamic-delete": ["off"],
         "@typescript-eslint/ban-ts-comment": "error",

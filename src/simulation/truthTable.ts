@@ -1,3 +1,4 @@
+import { Signal } from "../core/signal";
 import { checkFor, createDiv } from "../core/utils";
 import { CellState } from "./utils/types";
 
@@ -9,23 +10,29 @@ const stateColors = {
 };
 
 export class TruthTable {
-    private body!: HTMLDivElement;
+    public onNameUpdate = new Signal<[string[]]>();
+    public onDataUpdate = new Signal<[CellState[][]]>();
+
+    private readonly body!: HTMLDivElement;
     private outputElements!: HTMLDivElement[][];
 
-    private inputSize!: number;
-    private outputSize!: number;
+    private readonly inputSize!: number;
+    private readonly outputSize!: number;
 
-    private names!: string[];
-    private outputs!: CellState[][];
+    private readonly names!: string[];
+    private readonly outputs!: CellState[][];
 
     public constructor(inputSize: number, outputSize: number) {
         this.body = createDiv({ id: "table", parent: document.body });
+        this.names = new Array(inputSize + outputSize).fill("");
 
         checkFor(inputSize > 0, "Invalid Input Size!");
         checkFor(outputSize > 0, "Invalid Output Size!");
 
         this.inputSize = inputSize;
         this.outputSize = outputSize;
+
+        this.outputs = new Array(outputSize).fill(0).map(_ => new Array(2 ** inputSize).fill(CellState.OFF));
 
         this.setupHTML();
     }
@@ -38,23 +45,21 @@ export class TruthTable {
         const inputsRow = createDiv({ id: "inputs", parent: mainRow });
         const outputsRow = createDiv({ id: "outputs", parent: mainRow });
 
-        this.names = [];
         for (let i = 0; i < this.inputSize + this.outputSize; i++) {
             const element = createDiv({ contentEditable: "true", parent: i < this.inputSize ? inputsRow : outputsRow });
-            this.names[i] = "";
 
-            this.onNameBlur(element, i);
-            element.addEventListener("focus", () => this.onNameFocus(element, i));
-            element.addEventListener("blur", () => this.onNameBlur(element, i));
+            this.onNameBlur(element);
+            element.addEventListener("focus", () => this.onNameFocus(element));
+            element.addEventListener("blur", () => this.onNameBlur(element));
             element.addEventListener("keydown", e => {
-                this.onNameKeyDown(e as KeyboardEvent, element, i);
+                this.onNameKeyDown(e as KeyboardEvent, element);
                 this.names[i] = element.innerHTML;
+                this.onNameUpdate.dispatch(this.names);
             });
             element.addEventListener("input", e => this.onNameInput(e as InputEvent, element));
         }
 
         this.outputElements = [];
-        this.outputs = [];
         for (let rowIndex = 0; rowIndex < datas.length; rowIndex++) {
             const data = datas[rowIndex];
 
@@ -81,17 +86,16 @@ export class TruthTable {
             }
 
             this.outputElements.push(rowOutputs);
-            this.outputs.push(new Array(this.outputSize).fill(0));
         }
     }
 
-    private onNameFocus(input: HTMLDivElement, idx: number): void {
+    private onNameFocus(input: HTMLDivElement): void {
         if (!input.classList.contains("placeholder")) return;
         input.classList.remove("placeholder");
         input.innerText = "";
     }
 
-    private onNameBlur(input: HTMLDivElement, idx: number): void {
+    private onNameBlur(input: HTMLDivElement): void {
         const value = input.innerText;
         if (value.length !== 0) return;
         input.innerText = "-";
@@ -126,7 +130,7 @@ export class TruthTable {
         }
     }
 
-    private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement, idx: number): void {
+    private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement): void {
         const value = input.innerHTML;
 
         if (event.key === "Dead") {
@@ -181,7 +185,7 @@ export class TruthTable {
         event.preventDefault();
     }
 
-    // Stolen code, idk how it does it!
+    // Stolen code, IDK how it does it!
     private getCaretPos(element: HTMLDivElement): number {
         const sel = window.getSelection();
         if (sel === null) return -1;
@@ -194,7 +198,7 @@ export class TruthTable {
         return preCaretRange.toString().length;
     }
 
-    // Stolen code, idk how it does it!
+    // Stolen code, IDK how it does it!
     private setCaretPos(element: HTMLDivElement, idx: number): void {
         const range = document.createRange();
         const sel = window.getSelection();
@@ -223,7 +227,9 @@ export class TruthTable {
 
         this.updateColor(output, newState);
         output.textContent = newState;
-        this.outputs[y][x] = newState;
+        this.outputs[x][y] = newState;
+
+        this.onDataUpdate.dispatch(this.outputs);
     }
 
     private updateColor(element: HTMLElement, state: CellState): void {

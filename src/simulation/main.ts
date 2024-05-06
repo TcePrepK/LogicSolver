@@ -4,8 +4,14 @@ import { TruthTable } from "./truthTable";
 
 export class Main {
     public initialize(): void {
-        new TruthTable(3, 2);
-        new KarnaughMap(3);
+        const inputAmount = 2;
+        const outputAmount = 4;
+
+        const table = new TruthTable(inputAmount, outputAmount);
+        const map = new KarnaughMap(inputAmount, outputAmount);
+
+        table.onNameUpdate.add(map.updateNames.bind(map));
+        table.onDataUpdate.add(map.updateSolution.bind(map));
     }
 
     public startRunning(): void {
