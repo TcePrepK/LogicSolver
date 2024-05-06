@@ -14,7 +14,6 @@ export class TruthTable {
     public onDataUpdate = new Signal<[CellState[][]]>();
 
     private readonly body!: HTMLDivElement;
-    private outputElements!: HTMLDivElement[][];
 
     private readonly inputSize!: number;
     private readonly outputSize!: number;
@@ -59,7 +58,6 @@ export class TruthTable {
             element.addEventListener("input", e => this.onNameInput(e as InputEvent, element));
         }
 
-        this.outputElements = [];
         for (let rowIndex = 0; rowIndex < datas.length; rowIndex++) {
             const data = datas[rowIndex];
 
@@ -84,8 +82,6 @@ export class TruthTable {
 
                 this.updateColor(element, bool);
             }
-
-            this.outputElements.push(rowOutputs);
         }
     }
 
@@ -106,82 +102,46 @@ export class TruthTable {
         if (event.inputType === "insertFromPaste") {
             const value = input.innerText;
             input.innerText = value.substring(0, 2);
-            input.classList.remove("supCase");
-            this.setCaretPos(input, 1);
-            return;
         }
 
         const value = input.innerText;
-        if ((/.([_\\^])./).test(value)) {
-            const key = event.data;
-            const pos = key === "_" ? "sub" : "sup";
-            input.innerHTML = `${input.innerText[0]}<${pos}>${key}</${pos}>`;
-            input.classList.add("supCase");
-            event.preventDefault();
-            this.setCaretPos(input, 2);
-            return;
-        }
-
-        if (value.length > 2) {
-            input.innerText = value.slice(0, 2);
-            input.classList.remove("supCase");
-            this.setCaretPos(input, 2);
-            return;
-        }
+        if (value.length > 2) input.innerText = value.slice(0, 2);
+        if (value.length !== 2) return;
+        input.innerHTML = `${value[0]}<sub>${value[1]}</sub>`;
+        this.setCaretPos(input, 2);
     }
 
     private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement): void {
+        const key = event.key;
         const value = input.innerHTML;
-
-        if (event.key === "Dead") {
-            input.blur();
-            setTimeout(() => input.focus());
-
-            event.preventDefault();
-            return;
-        }
-
-        if (value.length < 2) return;
+        if (value.length < 2 && key !== " ") return;
 
         const deleteKeys = ["Backspace", "Delete"];
 
         const select = window.getSelection();
-        const posReg = /<(\/)?(sub|sup)>/;
-        if (deleteKeys.includes(event.key)) {
+        const posReg = /<(\/)?sub>/;
+        if (deleteKeys.includes(key)) {
             if (!posReg.test(value)) return;
 
             if (select && select.toString().length === 2) {
                 input.innerHTML = "";
-                input.classList.remove("supCase");
                 event.preventDefault();
                 return;
             }
 
-            const idx = deleteKeys.indexOf(event.key);
+            const idx = deleteKeys.indexOf(key);
             const caret = this.getCaretPos(input);
             if (caret === idx * 2) return;
 
             const nonPos = value.replace(posReg, "");
-            const final = nonPos.split("")[2 - idx - caret];
-            input.innerHTML = final;
-            input.classList.remove("supCase");
+            input.innerHTML = nonPos.split("")[2 - idx - caret];
             this.setCaretPos(input, caret - 1 + idx);
 
             event.preventDefault();
             return;
         }
 
-        if (event.key.length > 2 || event.ctrlKey) return;
-
-        if ((/.([_\\^])/).test(value)) {
-            const pos = value[1] === "_" ? "sub" : "sup";
-            input.innerHTML = `${input.innerHTML[0]}<${pos}>${event.key}</${pos}>`;
-            if (pos === "sup") input.classList.add("supCase");
-            this.setCaretPos(input, 2);
-            event.preventDefault();
-            return;
-        }
-
+        if (key.length > 2 || event.ctrlKey) return;
         event.preventDefault();
     }
 
