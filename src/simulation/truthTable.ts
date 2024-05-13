@@ -48,14 +48,18 @@ export class TruthTable {
             const element = createDiv({ contentEditable: "true", parent: i < this.inputSize ? inputsRow : outputsRow });
 
             this.onNameBlur(element);
-            element.addEventListener("focus", () => this.onNameFocus(element));
-            element.addEventListener("blur", () => this.onNameBlur(element));
-            element.addEventListener("keydown", e => {
-                this.onNameKeyDown(e as KeyboardEvent, element);
+            element.addEventListener("focus", _ => this.onNameFocus(element));
+            element.addEventListener("blur", _ => this.onNameBlur(element));
+            element.addEventListener("keydown", e => this.onNameKeyDown(e as KeyboardEvent, element));
+            element.addEventListener("input", e => {
+                this.onNameInput(e as InputEvent, element);
+                const prevVal = this.names[i];
+                const newVal = element.innerHTML;
+
+                if (prevVal === newVal) return;
                 this.names[i] = element.innerHTML;
                 this.onNameUpdate.dispatch(this.names);
             });
-            element.addEventListener("input", e => this.onNameInput(e as InputEvent, element));
         }
 
         for (let rowIndex = 0; rowIndex < datas.length; rowIndex++) {
@@ -111,38 +115,40 @@ export class TruthTable {
         this.setCaretPos(input, 2);
     }
 
-    private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement): void {
+    private onNameKeyDown(event: KeyboardEvent, input: HTMLDivElement): boolean {
         const key = event.key;
         const value = input.innerHTML;
-        if (value.length < 2 && key !== " ") return;
+        if (value.length < 2 && key !== " " && key.length < 2) return true;
 
         const deleteKeys = ["Backspace", "Delete"];
 
         const select = window.getSelection();
         const posReg = /<(\/)?sub>/;
         if (deleteKeys.includes(key)) {
-            if (!posReg.test(value)) return;
+            if (!posReg.test(value)) return true;
 
             if (select && select.toString().length === 2) {
                 input.innerHTML = "";
                 event.preventDefault();
-                return;
+                return true;
             }
 
             const idx = deleteKeys.indexOf(key);
             const caret = this.getCaretPos(input);
-            if (caret === idx * 2) return;
+            if (caret === idx * 2) return false;
 
             const nonPos = value.replace(posReg, "");
             input.innerHTML = nonPos.split("")[2 - idx - caret];
             this.setCaretPos(input, caret - 1 + idx);
 
             event.preventDefault();
-            return;
+            return true;
         }
 
-        if (key.length > 2 || event.ctrlKey) return;
+        if (key.length > 2 || event.ctrlKey) return false;
         event.preventDefault();
+
+        return false;
     }
 
     // Stolen code, IDK how it does it!

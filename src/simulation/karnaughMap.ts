@@ -11,28 +11,42 @@ type SolutionCell = {
     negate: boolean,
 };
 
+type SolutionProduct = SolutionCell[];
+
 export class KarnaughMap {
-    private size: number;
-    private amount: number;
+    private readonly size: number;
+    private readonly amount: number;
     private names: string[];
 
     private outputs: CellState[][];
-    private solutions: string[];
+    private readonly solutions: SolutionProduct[][];
+    private readonly finalSolutions: string[];
+
+    private readonly emptyProduct = [{ varIdx: -1, negate: true }] as SolutionProduct;
 
     public constructor(size: number, amount: number) {
         this.size = size;
         this.amount = amount;
-        this.names = new Array(this.size);
+        this.names = new Array(this.size).fill("").map((_, i) => String.fromCharCode("A".charCodeAt(0) + i));
         this.outputs = new Array(amount).fill(0).map(_ => new Array(2 ** this.size).fill(CellState.OFF));
-        this.solutions = new Array(amount).fill("0");
+        this.solutions = new Array(amount).fill([this.emptyProduct]);
+        this.finalSolutions = new Array(amount).fill("0");
 
-        // this.outputs[0][0] = CellState.ON;
-        // this.outputs[0][1] = CellState.X;
-        // this.updateSolution(this.outputs);
+        this.finalizeSolutions();
     }
 
     public updateNames(newNames: string[]): void {
         this.names = newNames;
+        this.finalizeSolutions();
+    }
+
+    private finalizeSolutions(): void {
+        for (let i = 0; i < this.amount; i++) {
+            const data = this.solutions[i];
+            this.finalSolutions[i] = data.map(prod => prod.map(cell => cell.varIdx < 0 ? `${cell.negate ? "0" : "1"}` : `${this.names[cell.varIdx]}${cell.negate ? "'" : ""}`).join("")).join(" + ");
+        }
+
+        console.log(this.finalSolutions);
     }
 
     public updateSolution(newOutputs: CellState[][]): void {
@@ -40,33 +54,28 @@ export class KarnaughMap {
         for (let i = 0; i < this.amount; i++) {
             this.solutions[i] = this.findSolution(this.outputs[i]);
         }
-
-        console.log(this.solutions);
+        this.finalizeSolutions();
     }
 
-    private findSolution(data: CellState[]): string {
+    private findSolution(data: CellState[]): SolutionProduct[] {
         const allGroups = this.findAllGroups(data);
-        if (allGroups.length === 0) return "0";
-        if (allGroups.length === 1) {
-            const group = allGroups[0];
-            if (group.pos.every(a => a === 0) && group.size.every(a => a === 2)) return "1";
-        }
+        if (allGroups.length === 0) return [this.emptyProduct];
 
-        this.devlog(allGroups);
-        const groupSolutions = [] as SolutionCell[][];
+        const products = [] as SolutionProduct[];
         for (let i = 0; i < allGroups.length; i++) {
             const { pos, size } = allGroups[i];
 
             const solution = [] as SolutionCell[];
             for (let j = 0; j < this.size; j++) {
                 if (size[j] === 2) continue;
-                solution.push({ varIdx: j, negate: pos[j] === 0 } as SolutionCell);
+                solution.push({ varIdx: j, negate: pos[j] === 0 });
             }
 
-            groupSolutions.push(solution);
+            if (solution.length === 0) solution.push({ varIdx: -1, negate: false });
+            products.push(solution);
         }
 
-        return groupSolutions.map(cell => cell.map(a => ["A", "B"][a.varIdx] + (a.negate ? "'" : "")).join("")).join(" + ");
+        return products;
     }
 
     private findAllGroups(data: CellState[]): GroupData[] {
@@ -117,12 +126,11 @@ export class KarnaughMap {
     private groupAtoBTest(data: CellState[], groups: GroupData[]): GroupData[] {
         if (groups.length === 0) return [];
 
-        // A\B 0 1
-        // 0 | X 1
-        // 1 | 0 0
-        // const baseSorted = groups.sort((a, b) => b.cells.length - a.cells.length);
-        const sorted = groups.sort((a, b) => b.cells.length - a.cells.length);
-        const onlyOnStates = sorted.map(a => (a.cells = a.cells.filter(b => data[b] === CellState.ON), a));
+        const sorted = groups.map(a => (a.cells = a.cells.filter(b => data[b] === CellState.ON), a));
+        const onlyOnStates = sorted.sort((a, b) => b.cells.length - a.cells.length);
+        // const sorted = groups.sort((a, b) => b.cells.length - a.cells.length);
+        // const onlyOnStates = sorted.map(a => (a.cells = a.cells.filter(b => data[b] === CellState.ON), a));
+
         const filtered = [];
 
         // this.devlog(onlyOnStates);
@@ -144,8 +152,8 @@ export class KarnaughMap {
         return filtered;
     }
 
-    private devlog(arr: GroupData[]): void {
-        const str = arr.map(a => `{\n  Pos: <${a.pos}>\n  Size: <${a.size}>\n  Cells: [${a.cells}]\n}`);
-        console.log(str.join(",\n"));
-    }
+    // private devlog(arr: GroupData[]): void {
+    //     const str = arr.map(a => `{\n  Pos: <${a.pos}>\n  Size: <${a.size}>\n  Cells: [${a.cells}]\n}`);
+    //     console.log(str.join(",\n"));
+    // }
 }
